@@ -9,6 +9,8 @@ using System.Collections.Generic;
 [RequireComponent(typeof(Cube))]
 public class Movement : MonoBehaviour
 {
+    private Transform _transform;
+
     private Cube _cube;
     private bool animating;
 
@@ -17,66 +19,66 @@ public class Movement : MonoBehaviour
     private void Start()
     {
         _cube = GetComponent<Cube>();
+        _transform = GetComponent<Transform>();
+        animating = false;
     }
 
     private void Update()
     {
-        if(Input.GetKeyDown(KeyCode.LeftArrow))
+        if (Input.GetKeyDown(KeyCode.LeftArrow))
+            StartCoroutine(RotateCube(_transform.position + new Vector3(-0.5f, -0.5f, 0f), Vector3.forward, false));
+
+        if (Input.GetKeyDown(KeyCode.RightArrow))
+            StartCoroutine(RotateCube(_transform.position + new Vector3(0.5f, -0.5f, 0f), Vector3.forward, true));
+
+        if (Input.GetKeyDown(KeyCode.DownArrow))
+            StartCoroutine(RotateCube(_transform.position + new Vector3(0f, -0.5f, -0.5f), Vector3.right, true));
+
+        if (Input.GetKeyDown(KeyCode.UpArrow))
+            StartCoroutine(RotateCube(_transform.position + new Vector3(0f, -0.5f, 0.5f), Vector3.right, false));
+    }
+
+    private IEnumerator RotateCube(Vector3 pivot, Vector3 direction, bool clockwise)
+    {
+        if (animating)
+            yield break;
+        animating = true;
+
+        float time = 0f;
+        float animationTime = 1f / speed;
+        float step = 90f / animationTime;
+
+
+        float delta = 0f;
+        while (time < animationTime)
         {
+            yield return null;
+
+            time += Time.deltaTime;
+            if (time > animationTime)
+                delta = time - animationTime;
+            else
+                delta = Time.deltaTime;
+            _transform.RotateAround(pivot, direction, Time.deltaTime * step * (clockwise ? -1f : 1f));
         }
+
+        Fix();
+
+        animating = false;
     }
 
-    private void RotateSideCW()
+    private void Fix()
     {
-        Cube.Vectors sides = _cube.Sides;
-        Vector3 up = sides.up;
-        RotateTo(up, sides.left, sides.forward, sides.forward);
+        Vector3 position = _transform.position;
+        position.x = Mathf.Round(position.x);
+        position.y = Mathf.Round(position.y);
+        position.z = Mathf.Round(position.z);
+        _transform.position = position;
 
-        sides.up = sides.left;
-        sides.left = sides.down;
-        sides.down = sides.right;
-        sides.right = up;
+        Vector3 rotation = _transform.eulerAngles;
+        rotation.x = 90f * Mathf.Round(rotation.x / 90f);
+        rotation.y = 90f * Mathf.Round(rotation.y / 90f);
+        rotation.z = 90f * Mathf.Round(rotation.z / 90f);
+        _transform.eulerAngles = rotation;
     }
-
-    private void RotateSideCCW()
-    {
-        Cube.Vectors sides = _cube.Sides;
-        Vector3 up = sides.up;
-        RotateTo(up, sides.left, sides.forward, sides.forward);
-
-        sides.up = sides.right;
-        sides.right = sides.down;
-        sides.down = sides.left;
-        sides.left = up;
-    }
-
-    private void RotateForwardCW()
-    {
-        Cube.Vectors sides = _cube.Sides;
-        Vector3 up = sides.up;
-        RotateTo(up, sides.left, sides.forward, sides.forward);
-
-        sides.up = sides.back;
-        sides.back = sides.down;
-        sides.down = sides.forward;
-        sides.forward = up;
-    }
-
-    private void RotateForwardCCW()
-    {
-        Cube.Vectors sides = _cube.Sides;
-        Vector3 up = sides.up;
-        RotateTo(up, sides.left, sides.forward, sides.forward);
-
-        sides.up = sides.forward;
-        sides.forward = sides.down;
-        sides.down = sides.back;
-        sides.back = up;
-    }
-
-    private IEnumerator RotateTo(Vector3 cUp, Vector3 tUp, Vector3 cForward, Vector3 tForward)
-    {
-        return null;
-    }
-
 }
